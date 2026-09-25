@@ -26,6 +26,9 @@ namespace ZooVs.Package
 			"(() => {" +
 			"  'use strict';" +
 			"  chrome.webview.addEventListener('message', e => { window.postMessage(e.data, '*'); });" +
+			"  window.MATERIAL_ICONS_BASE_URI = '/assets/vscode-material-icons';" +
+			"  window.IMAGES_BASE_URI = '/assets/images';" +
+			"  window.AUDIO_BASE_URI = '/webview-ui/audio';" +
 			"  let __zooState = null;" +
 			"  Object.defineProperty(window, 'acquireVsCodeApi', {" +
 			"    value: () => ({" +
