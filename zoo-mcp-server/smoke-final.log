@@ -1,0 +1,33 @@
+=== get_solution_model ===
+解决方案: DemoApp.csproj
+- DemoApp [C#] 文档 3 个  (E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\DemoApp.csproj)
+
+
+=== symbol_search ===
+NamedType DemoApp.Greeter  @ E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\Program.cs:8
+
+=== find_references ===
+符号: Method DemoApp.IGreeter.Greet(string)  @ E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\Program.cs:5
+  Method DemoApp.IGreeter.Greet(string): 1 处
+    - E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\Program.cs:24
+  Method DemoApp.Greeter.Greet(string): 1 处
+    - E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\Program.cs:16
+  Method DemoApp.FancierGreeter.Greet(string): 1 处
+   
+
+=== hierarchy ===
+基类链: (直接继承 object)
+接口: 
+实现类:
+  DemoApp.Greeter  @ E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\Program.cs
+  DemoApp.FancierGreeter  @ E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\Program.cs
+
+
+=== find_implementations ===
+Method DemoApp.Greeter.Greet(string)  @ E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\Program.cs:10
+Method DemoApp.FancierGreeter.Greet(string)  @ E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\Program.cs:16
+
+=== build ===
+MSBuild 退出码: 0(DemoApp.csproj, Debug)
+错误 0 个,警告 0 个
+

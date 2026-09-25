@@ -1,0 +1,14 @@
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\bin\Debug\net8.0\DemoApp.exe
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\bin\Debug\net8.0\DemoApp.deps.json
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\bin\Debug\net8.0\DemoApp.runtimeconfig.json
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\bin\Debug\net8.0\DemoApp.dll
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\bin\Debug\net8.0\DemoApp.pdb
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\obj\Debug\net8.0\DemoApp.GeneratedMSBuildEditorConfig.editorconfig
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\obj\Debug\net8.0\DemoApp.AssemblyInfoInputs.cache
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\obj\Debug\net8.0\DemoApp.AssemblyInfo.cs
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\obj\Debug\net8.0\DemoApp.csproj.CoreCompileInputs.cache
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\obj\Debug\net8.0\DemoApp.dll
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\obj\Debug\net8.0\refint\DemoApp.dll
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\obj\Debug\net8.0\DemoApp.pdb
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\obj\Debug\net8.0\DemoApp.genruntimeconfig.cache
+E:\code\cline-vsex\zoo-mcp-server\testdata\DemoApp\obj\Debug\net8.0\ref\DemoApp.dll
