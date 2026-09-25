@@ -1,0 +1,8 @@
+# 嵌套上游仓库(各自独立 git 管理)
+/Zoo-Code/
+/cline/
+# 可再生的构建中间物
+zoo-vsix/src/ZooVs.Package/bin/
+zoo-vsix/src/ZooVs.Package/obj/
+vsix/src/*/bin/
+vsix/src/*/obj/

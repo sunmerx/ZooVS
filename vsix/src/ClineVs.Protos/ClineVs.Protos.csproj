@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.27.4" />
+    <PackageReference Include="Grpc.Core.Api" Version="2.46.6" />
+    <PackageReference Include="Grpc.Tools" Version="2.71.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!--
+    host/*.proto:生成 gRPC 服务端基类(C# Bridge 要实现这 39 个 RPC + CoreConnection)。
+    cline/common.proto:host 服务引用的公共消息,同样生成代码;其余 cline/*.proto
+    仅作为流式方法清单的解析源,嵌入为资源,不做代码生成。
+  -->
+  <ItemGroup>
+    <Protobuf Include="..\..\proto\host\*.proto" ProtoRoot="..\..\proto" GrpcServices="Server" />
+    <Protobuf Include="..\..\proto\cline\common.proto" ProtoRoot="..\..\proto" GrpcServices="None" />
+    <Protobuf Include="..\..\proto\health.proto" ProtoRoot="..\..\proto" GrpcServices="Server" />
+    <EmbeddedResource Include="..\..\proto\cline\*.proto" LinkBase="cline-proto" />
+  </ItemGroup>
+
+</Project>

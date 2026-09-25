@@ -1,0 +1,20 @@
+<Project>
+
+  <!--
+    ClineVs.Package 的 VSIX 打包挂接。
+    本文件由 SDK 在 Common.targets 之后导入,此处的 $(TargetPath)/$(IntermediateOutputPath)
+    均已求值,因此 VSSDK 的属性不再为空(在 csproj 内 Import 会早求值导致 VSSDK1032/1202)。
+  -->
+  <PropertyGroup Condition="'$(IsZooVsPackageProject)' == 'true'">
+    <CreatePkgDefAssemblyToProcess Condition="'$(CreatePkgDefAssemblyToProcess)' == ''">$(TargetPath)</CreatePkgDefAssemblyToProcess>
+  </PropertyGroup>
+
+  <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets"
+          Condition="'$(IsZooVsPackageProject)' == 'true' and '$(VSToolsPath)' != '' and Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
+
+  <Target Name="BuildVsix"
+          AfterTargets="Build"
+          Condition="'$(IsZooVsPackageProject)' == 'true'"
+          DependsOnTargets="GeneratePkgDef;CreateVsixContainer" />
+
+</Project>

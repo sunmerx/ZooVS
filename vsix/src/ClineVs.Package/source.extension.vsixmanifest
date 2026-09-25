@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+  <Metadata>
+    <Identity Language="en-US" Id="ClineVS" Version="0.1.0" Publisher="ClineVSContributors"/>
+    <DisplayName>ClineVS Chat</DisplayName>
+    <Description xml:space="preserve">Community port of the Cline AI coding agent for Visual Studio 2022. Runs the upstream cline-core engine in a sidecar process and hosts the official web UI in a WebView2 tool window.</Description>
+    <Tags>AI,Agent,Cline,LLM,Chat</Tags>
+  </Metadata>
+  <Installation>
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, 18.0)">
+      <ProductArchitecture>amd64</ProductArchitecture>
+    </InstallationTarget>
+  </Installation>
+  <Dependencies/>
+  <Prerequisites>
+    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,)" Caption="Visual Studio core editor"/>
+  </Prerequisites>
+  <Assets>
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="|ClineVs.Package|"/>
+  </Assets>
+</PackageManifest>

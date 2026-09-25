@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <Extern href="stdidcmd.h"/>
+  <Extern href="vsshlids.h"/>
+
+  <Commands package="guidClineVsPackage">
+    <Buttons>
+      <!-- Tools 菜单的 Tools/Add-ins 组 -->
+      <Button guid="guidClineVsCommandSet" id="cmdidClineToolWindow" priority="0x0500" type="Button">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_MM_TOOLSADDINS"/>
+        <Strings>
+          <ButtonText>Open ClineVS Chat</ButtonText>
+        </Strings>
+      </Button>
+      <!-- View > Other Windows > ClineVS Chat -->
+      <Button guid="guidClineVsCommandSet" id="cmdidClineToolWindowView" priority="0x0501" type="Button">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1"/>
+        <Strings>
+          <ButtonText>ClineVS Chat</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+  <Symbols>
+    <GuidSymbol name="guidClineVsPackage" value="{b7f7e14c-6a2e-4a1b-9d3f-2c8e5f0a91d7}"/>
+    <GuidSymbol name="guidClineVsCommandSet" value="{f1e2d3c4-b5a6-4789-9a0b-1c2d3e4f5a6b}">
+      <IDSymbol name="cmdidClineToolWindow" value="0x0100"/>
+      <IDSymbol name="cmdidClineToolWindowView" value="0x0101"/>
+    </GuidSymbol>
+  </Symbols>
+
+</CommandTable>
