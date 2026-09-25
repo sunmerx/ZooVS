@@ -18,6 +18,7 @@ namespace ZooVs.Daemon
 		private readonly string _extensionPath;   // 扩展 bundle(assets/dist)
 		private readonly string _dataDirectory;
 		private readonly string _nodeExecutable;
+		private readonly string _workspacePath;
 		private readonly int _maxRestarts = 3;
 
 		private Process _process;
@@ -35,12 +36,14 @@ namespace ZooVs.Daemon
 			string hostDirectory,
 			string extensionPath,
 			string dataDirectory,
+			string workspacePath,
 			string nodeExecutable = "node")
 		{
 			_host = host;
 			_hostDirectory = hostDirectory;
 			_extensionPath = extensionPath;
 			_dataDirectory = dataDirectory;
+			_workspacePath = workspacePath;
 			_nodeExecutable = nodeExecutable;
 		}
 
@@ -74,7 +77,7 @@ namespace ZooVs.Daemon
 				StandardOutputEncoding = Encoding.UTF8,
 			};
 			info.EnvironmentVariables["ZOO_EXTENSION_PATH"] = _extensionPath;
-			info.EnvironmentVariables["ZOO_WORKSPACE"] = Environment.CurrentDirectory;
+			info.EnvironmentVariables["ZOO_WORKSPACE"] = _workspacePath;
 			info.EnvironmentVariables["ZOO_STORAGE_DIR"] = _dataDirectory;
 			info.StandardOutputEncoding = Encoding.UTF8;
 
@@ -113,6 +116,13 @@ namespace ZooVs.Daemon
 							if (root.TryGetProperty("message", out var message))
 							{
 								var json = message.GetRawText();
+								// ask(partial=false) = agent 停下等用户批准 —— 给出显式提示,
+								// 否则用户以为"中断/卡死"(M1 实测教训)
+								if (json.Contains("\"ask\":") && json.Contains("\"partial\":false"))
+								{
+									_ = _host.SetStatusBarAsync("Zoo Code 等待你在 ZooVS 面板中批准操作(如读取文件)");
+									_host.Log("[ask] agent 已暂停,等待你在 ZooVS 面板中批准/拒绝操作");
+								}
 								_ = _host.InvokeOnUIThreadAsync(() => PostToWebview(json));
 							}
 							break;

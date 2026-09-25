@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
 using ZooVs.Bridge;
@@ -64,6 +65,9 @@ namespace ZooVs.Package
 		private readonly StdioHostManager _hostManager;
 		private Microsoft.Web.WebView2.Wpf.WebView2 _webView;
 		private volatile bool _initialized;
+		private readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> _msgCounts =
+			new System.Collections.Concurrent.ConcurrentDictionary<string, int>();
+		private volatile bool _askPending;
 
 		public ZooWebviewController(AsyncPackage package, VsBridgeHost bridgeHost, StdioHostManager hostManager)
 		{
@@ -162,6 +166,14 @@ namespace ZooVs.Package
 						"hasVsCodeApi: typeof window.acquireVsCodeApi === 'function'" +
 						"})");
 					_bridgeHost.Log("[webview:state] " + Truncate(diag, 300));
+
+					// 15 秒后快照:统计 + 页面尾部内容(是否有批准按钮文案)
+					await Task.Delay(15000);
+					var counts = string.Join(",", _msgCounts.Select(kv => kv.Key + ":" + kv.Value));
+					_bridgeHost.Log("[diag] 已投递消息统计 " + counts);
+					var tail = await core.ExecuteScriptAsync(
+						"(() => { const t = document.body?.innerText || ''; return JSON.stringify({ len: t.length, tail: t.slice(-350), askVisible: /approv|批准|同意|reject|拒绝/i.test(t) }); })()");
+					_bridgeHost.Log("[diag] 页面尾部 " + Truncate(tail, 450));
 				}
 				catch (Exception ex)
 				{
@@ -251,6 +263,32 @@ namespace ZooVs.Package
 
 			try
 			{
+				// 诊断:统计到达前端的消息类型
+				try
+				{
+					using (var d = System.Text.Json.JsonDocument.Parse(messageJson))
+					{
+						var msgType = d.RootElement.TryGetProperty("type", out var te) ? te.GetString() : "?";
+						_msgCounts.AddOrUpdate(msgType ?? "?", 1, (_, c) => c + 1);
+
+						if (d.RootElement.TryGetProperty("ask", out var askEl) &&
+							d.RootElement.TryGetProperty("partial", out var pe) &&
+							pe.ValueKind == System.Text.Json.JsonValueKind.False)
+						{
+							if (!_askPending)
+							{
+								_askPending = true;
+								_bridgeHost.Log("[diag] ask 已投递到前端(等待批准),消息类型=" + askEl.GetString());
+							}
+						}
+						else if (d.RootElement.TryGetProperty("say", out _) || msgType == "state")
+						{
+							_askPending = false;
+						}
+					}
+				}
+				catch { }
+
 				// 页面桥脚本把 chrome.webview 消息转成 window message,前端零改动
 				webView.CoreWebView2.PostWebMessageAsJson(messageJson);
 			}

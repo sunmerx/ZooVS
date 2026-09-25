@@ -61,7 +61,10 @@ namespace ZooVs.Package
 				"ZooVS", "data");
 
 			_bridgeHost = new VsBridgeHost(this);
-			_hostManager = new StdioHostManager(_bridgeHost, hostDir, distDir, dataDir);
+			// 工作区 = 当前解决方案目录(不能取 VS 进程 CWD,否则是 devenv.exe 目录)
+			var workspacePath = await _bridgeHost.GetWorkspacePathAsync();
+			_bridgeHost.Log("[package] 工作区:" + workspacePath);
+			_hostManager = new StdioHostManager(_bridgeHost, hostDir, distDir, dataDir, workspacePath);
 			_controller = new ZooWebviewController(this, _bridgeHost, _hostManager);
 			_hostManager.WebviewPostHandler = _controller.PostExtensionMessageToWebview;
 

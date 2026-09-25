@@ -12,6 +12,12 @@ namespace ZooVs.Bridge
 		Task<T> InvokeOnUIThreadAsync<T>(Func<T> func);
 		Task InvokeOnUIThreadAsync(Action action);
 		void Log(string message);
+
+		/// <summary>当前工作区路径(解决方案目录,无则文档目录)。</summary>
+		Task<string> GetWorkspacePathAsync();
+
+		/// <summary>状态栏临时提示(不弹窗,不打断)。</summary>
+		Task SetStatusBarAsync(string message);
 	}
 
 	/// <summary>无 VS 依赖的默认实现(冒烟/非 UI 场景)。</summary>
@@ -20,5 +26,7 @@ namespace ZooVs.Bridge
 		public Task<T> InvokeOnUIThreadAsync<T>(Func<T> func) => Task.FromResult(func());
 		public Task InvokeOnUIThreadAsync(Action action) { action(); return Task.CompletedTask; }
 		public void Log(string message) => System.Diagnostics.Debug.WriteLine(message);
+		public Task<string> GetWorkspacePathAsync() => Task.FromResult(System.IO.Directory.GetCurrentDirectory());
+		public Task SetStatusBarAsync(string message) => Task.CompletedTask;
 	}
 }

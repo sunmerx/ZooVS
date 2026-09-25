@@ -47,6 +47,37 @@ namespace ZooVs.Package
 			});
 		}
 
+		public async Task<string> GetWorkspacePathAsync()
+		{
+			await _package.JoinableTaskFactory.SwitchToMainThreadAsync();
+			try
+			{
+				var dte = (EnvDTE80.DTE2)ServiceProvider.GlobalProvider.GetService(typeof(EnvDTE.DTE));
+				if (dte?.Solution != null && !string.IsNullOrEmpty(dte.Solution.FullName))
+				{
+					return System.IO.Path.GetDirectoryName(dte.Solution.FullName);
+				}
+				var doc = dte?.ActiveDocument?.FullName;
+				if (!string.IsNullOrEmpty(doc))
+				{
+					return System.IO.Path.GetDirectoryName(doc);
+				}
+			}
+			catch { }
+			return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+		}
+
+		public async Task SetStatusBarAsync(string message)
+		{
+			await _package.JoinableTaskFactory.SwitchToMainThreadAsync();
+			try
+			{
+				var statusBar = (IVsStatusbar)ServiceProvider.GlobalProvider.GetService(typeof(SVsStatusbar));
+				statusBar?.SetText(message);
+			}
+			catch { }
+		}
+
 		private void EnsureOutputPane()
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();

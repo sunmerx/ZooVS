@@ -2288,9 +2288,17 @@ var send = (obj) => {
   }
 };
 var log = (text) => send({ type: "log", text: String(text).slice(0, 500) });
-console.log = (...a) => log("[ext] " + a.map((x) => typeof x === "string" ? x : JSON.stringify(x)).join(" "));
-console.warn = (...a) => log("[ext:warn] " + a.map((x) => typeof x === "string" ? x : JSON.stringify(x)).join(" "));
-console.error = (...a) => log("[ext:err] " + a.map((x) => typeof x === "string" ? x : JSON.stringify(x)).join(" "));
+var safeStr = (x) => {
+  if (typeof x === "string") return x;
+  try {
+    return JSON.stringify(x) ?? String(x);
+  } catch {
+    return String(x);
+  }
+};
+console.log = (...a) => log("[ext] " + a.map(safeStr).join(" "));
+console.warn = (...a) => log("[ext:warn] " + a.map(safeStr).join(" "));
+console.error = (...a) => log("[ext:err] " + a.map(safeStr).join(" "));
 process.on("uncaughtException", (err) => log("[host:uncaught] " + (err?.stack || err)));
 process.on("unhandledRejection", (err) => log("[host:rejection] " + (err?.stack || err)));
 var ZooHost = class extends import_events.EventEmitter {
