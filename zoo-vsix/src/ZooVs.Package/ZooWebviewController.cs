@@ -144,6 +144,22 @@ namespace ZooVs.Package
 				VirtualHost, webviewDir,
 				CoreWebView2HostResourceAccessKind.Allow);
 
+			// 开发期禁用虚拟域缓存:VSIX 更新后 webview 产物已变,但 WebView2 可能仍回旧缓存,
+			// 表现为界面停留在旧版(缺新按钮)。
+			core.WebResourceRequested += (s, e) =>
+			{
+				try
+				{
+					if (e.Request.Uri.StartsWith("https://" + VirtualHost + "/", StringComparison.OrdinalIgnoreCase))
+					{
+						e.Response.Headers.AppendHeader("Cache-Control", "no-store");
+					}
+				}
+				catch { }
+			};
+			core.AddWebResourceRequestedFilter(
+				"https://" + VirtualHost + "/*", CoreWebView2WebResourceContext.All);
+
 			await core.AddScriptToExecuteOnDocumentCreatedAsync(BridgeScript);
 
 			core.WebMessageReceived += OnWebMessageReceived;

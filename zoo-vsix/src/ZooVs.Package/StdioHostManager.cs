@@ -52,8 +52,38 @@ namespace ZooVs.Daemon
 			_stopped = false;
 			_restartCount = 0;
 			Directory.CreateDirectory(_dataDirectory);
+			KillOrphanHosts();
 			StartHostProcess();
 			return Task.CompletedTask;
+		}
+
+		/// <summary>
+		/// 清理上次 VS 会话遗留的本扩展宿主进程(强杀/崩溃场景)。
+		/// 孤儿进程持有数据目录会让新宿主初始化卡死(表现为界面停在"正在启动…")。
+		/// 按命令行包含 host.cjs 全路径的特征精确匹配,不误伤其他 node。
+		/// </summary>
+		private void KillOrphanHosts()
+		{
+			try
+			{
+				var marker = Path.Combine(_hostDirectory, "host.cjs").ToLowerInvariant();
+				foreach (var o in new System.Management.ManagementObjectSearcher(
+					"SELECT ProcessId, CommandLine FROM Win32_Process WHERE Name = 'node.exe'").Get())
+				{
+					var mo = (System.Management.ManagementBaseObject)o;
+					var cmd = (mo["CommandLine"] as string ?? "").ToLowerInvariant();
+					if (cmd.Contains(marker))
+					{
+						var pid = Convert.ToInt32(mo["ProcessId"]);
+						_host.Log("[host] 清理遗留宿主进程 pid=" + pid);
+						try { Process.GetProcessById(pid)?.Kill(); } catch { }
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				_host.Log("[host] 孤儿进程清理检查失败:" + ex.Message);
+			}
 		}
 
 		private void StartHostProcess()
