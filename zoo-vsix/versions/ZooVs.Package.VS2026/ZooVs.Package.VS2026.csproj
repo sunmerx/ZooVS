@@ -1,0 +1,119 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ZooVS · Visual Studio 2026 (18.x) 版本工程。
+    与 VS2022 主工程(zoo-vsix/src/ZooVs.Package)完全隔离:独立 csproj/manifest/输出目录,
+    源码经 Compile 链接共享,版本差异用 #if ZOOVS_VS2026 收敛在源码内。
+    引用集差异(依据本机 devenv.exe.config 实测):
+      - Roslyn 重定向范围 0.0.0.0-3.11 → 3.11.0.0:必须按 3.11 编译(4.12 请求落在范围外会 FileLoad)
+      - 编辑器程序集重定向 2.0.0.0-16.0 → 16.0:VS SDK 必须 16.x(17.x 落在范围外)
+    VS2026(18.x)因重定向范围 0.0.0.0-5.5 覆盖 4.12,复用 2022 引用集,见 ZooVs.Package.VS2026。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <RootNamespace>ZooVs.Package</RootNamespace>
+    <AssemblyName>ZooVs.Package</AssemblyName>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <UseCodebase>true</UseCodebase>
+    <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
+    <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
+    <IncludeDebugSymbolsInLocalVSIXDeployment>false</IncludeDebugSymbolsInLocalVSIXDeployment>
+    <CopyBuildOutputToOutputDirectory>true</CopyBuildOutputToOutputDirectory>
+    <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
+    <DeployExtension>false</DeployExtension>
+    <CopyVsixExtensionFiles>false</CopyVsixExtensionFiles>
+    <VsixType>v3</VsixType>
+    <IsZooVsPackageProject>true</IsZooVsPackageProject>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <DefineConstants>$(DefineConstants);ZOOVS_VS2026</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.14.2139" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <!-- Roslyn 4.12 仅编译期(ExcludeAssets=runtime);运行时由 VS2026 devenv.exe.config 统一到自带 5.5 -->
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.12.0" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Features" Version="4.12.0" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.VisualStudio.ComponentModelHost" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System.Xaml" />
+  </ItemGroup>
+
+  <!-- 共享源码:链接主工程全部 .cs(含 Bridge 子目录),排除主工程的 bin/obj -->
+  <ItemGroup>
+    <Compile Include="..\..\src\ZooVs.Package\**\*.cs"
+             Exclude="..\..\src\ZooVs.Package\**\bin\**;..\..\src\ZooVs.Package\**\obj\**"
+             LinkBase="src" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <VSCTCompile Include="..\..\src\ZooVs.Package\ZooVs.vsct" Link="ZooVs.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+    </VSCTCompile>
+    <EmbeddedResource Include="..\..\src\ZooVs.Package\VSPackage.resx" Link="VSPackage.resx">
+      <MergeWithCTO>true</MergeWithCTO>
+      <ManifestResourceName>VSPackage</ManifestResourceName>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="source.extension.vsixmanifest">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+
+  <!-- Apache-2.0 合规:随 VSIX 分发协议文本与第三方声明 -->
+  <ItemGroup>
+    <Content Include="..\..\LICENSE">
+      <Link>LICENSE</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="..\..\THIRD-PARTY-NOTICES.md">
+      <Link>THIRD-PARTY-NOTICES.md</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\assets\webview\**\*">
+      <Link>assets\webview\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="..\..\assets\host\**\*">
+      <Link>assets\host\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="..\..\assets\roslyn\**\*">
+      <Link>assets\roslyn\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="..\..\assets\dist\**\*">
+      <Link>assets\dist\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+  </ItemGroup>
+
+</Project>

@@ -1,7 +1,9 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
+// 消除 VS2019 SDK16 的 Microsoft.VisualStudio.Shell.Task 歧义(对 2022 无影响)
+using Task = System.Threading.Tasks.Task;
 using ZooVs.Bridge;
 using ZooVs.Daemon;
 using Microsoft.VisualStudio.Shell;
