@@ -12,3 +12,13 @@ zoo-mcp-server/obj/
 zoo-vsix/test/*.png
 zoo-vsix/test/*.log
 zoo-vsix/test/deploy_watch.log
+
+# 内部工作文档不入库(GitHub 只保留 README/LICENSE/NOTICES)
+/ZooVS-移植方案.md
+/cline-vs2022-移植可行性评估.md
+/cline-模块划分与迁移可行性审查.md
+/移植实施计划.md
+/zoo-vsix/缺失功能与Copilot对比.md
+/zoo-vsix/自测提示词.md
+/zoo-vsix/验收清单与待办评估.md
+/zoo-vsix/marketplace/overview.md
