@@ -25,6 +25,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 
 // zoohost/src/host.ts
 var import_module = require("module");
+var import_fs = __toESM(require("fs"));
 var import_path = __toESM(require("path"));
 var import_readline = __toESM(require("readline"));
 var import_events = require("events");
@@ -2327,6 +2328,135 @@ global.vscode = vscode;
     envAny.onDidChangeTelemetryEnabled = (_cb) => ({ dispose: () => {
     } });
   }
+  if (!envAny.appRoot) {
+    envAny.appRoot = extensionPath;
+  }
+  const wsAny = vscode.workspace;
+  if (typeof wsAny.getWorkspaceFolder !== "function") {
+    wsAny.getWorkspaceFolder = (uri) => {
+      const fsPath = typeof uri === "string" ? uri : uri?.fsPath ?? "";
+      const folders = wsAny.workspaceFolders ?? [];
+      for (const f of folders) {
+        const root = f?.uri?.fsPath ?? "";
+        if (root && String(fsPath).toLowerCase().startsWith(root.toLowerCase())) return f;
+      }
+      return void 0;
+    };
+  }
+  if (typeof wsAny.openTextDocument !== "function") {
+    const languageOf = (p) => {
+      const ext = p.slice(p.lastIndexOf(".") + 1).toLowerCase();
+      const map = {
+        cs: "csharp",
+        vb: "vb",
+        ts: "typescript",
+        tsx: "typescriptreact",
+        js: "javascript",
+        jsx: "javascriptreact",
+        json: "json",
+        md: "markdown",
+        py: "python",
+        fs: "fsharp",
+        xml: "xml",
+        xaml: "xml",
+        css: "css",
+        html: "html",
+        yml: "yaml",
+        yaml: "yaml"
+      };
+      return map[ext] ?? "plaintext";
+    };
+    const makeDoc = (fsPath) => {
+      let text = "";
+      try {
+        text = import_fs.default.readFileSync(fsPath, "utf8");
+      } catch {
+      }
+      const lines = text.split("\n");
+      return {
+        uri: { scheme: "file", path: fsPath.replace(/\\/g, "/"), fsPath, toString: () => "file:///" + fsPath.replace(/\\/g, "/") },
+        fileName: fsPath,
+        languageId: languageOf(fsPath),
+        version: 1,
+        isDirty: false,
+        isUntitled: false,
+        isClosed: false,
+        eol: 1,
+        lineCount: lines.length,
+        getText: (range) => {
+          if (!range) return text;
+          try {
+            return SliceByLines(
+              text,
+              range.start?.line ?? 0,
+              range.start?.character ?? 0,
+              range.end?.line ?? range.start?.line ?? 0,
+              range.end?.character ?? range.start?.character ?? 0
+            );
+          } catch {
+            return "";
+          }
+        },
+        lineAt: (n) => {
+          const t = lines[Math.max(0, Math.min(n, lines.length - 1))] ?? "";
+          return { lineNumber: n, text: t.replace(/\r$/, ""), range: { start: { line: n, character: 0 }, end: { line: n, character: t.length } }, firstNonWhitespaceCharacterIndex: t.length - t.trimStart().length, isEmptyOrWhitespace: t.trim().length === 0 };
+        },
+        positionAt: (offset) => {
+          const clamped = Math.max(0, Math.min(offset, text.length));
+          const before = text.slice(0, clamped);
+          const line = before.split("\n").length - 1;
+          return { line, character: clamped - (before.lastIndexOf("\n") + 1) };
+        },
+        offsetAt: (pos) => {
+          try {
+            const starts = [0];
+            for (let i = 0; i < text.length; i++) if (text.charCodeAt(i) === 10) starts.push(i + 1);
+            return (starts[Math.max(0, Math.min(pos?.line ?? 0, starts.length - 1))] ?? 0) + Math.max(0, pos?.character ?? 0);
+          } catch {
+            return 0;
+          }
+        },
+        getWordRangeAtPosition: () => void 0,
+        validateRange: (r) => r,
+        validatePosition: (p) => p,
+        save: async () => void 0
+      };
+    };
+    wsAny.openTextDocument = async (arg) => makeDoc(typeof arg === "string" ? arg : arg?.fsPath ?? arg?.path ?? "");
+  }
+  if (typeof wsAny.onDidSaveTextDocument !== "function") {
+    wsAny.onDidSaveTextDocument = (_cb) => ({ dispose: () => {
+    } });
+  }
+  if (typeof wsAny.applyEdit !== "function") {
+    wsAny.applyEdit = async (edit) => {
+      try {
+        const entries = typeof edit?.entries === "function" ? edit.entries() : [];
+        for (const [uri, edits] of entries) {
+          const file = uri?.fsPath ?? uri?.path;
+          if (!file || !Array.isArray(edits) || edits.length === 0) continue;
+          let text = "";
+          try {
+            text = import_fs.default.readFileSync(file, "utf8");
+          } catch {
+            continue;
+          }
+          const starts = [0];
+          for (let i = 0; i < text.length; i++) if (text.charCodeAt(i) === 10) starts.push(i + 1);
+          const toOffset = (p) => (starts[Math.max(0, Math.min(p?.line ?? 0, starts.length - 1))] ?? 0) + Math.max(0, p?.character ?? 0);
+          const ordered = edits.map((e) => ({ start: toOffset(e?.range?.start), end: toOffset(e?.range?.end), text: e?.newText ?? "" })).sort((a, b) => b.start - a.start);
+          for (const e of ordered) {
+            text = text.slice(0, e.start) + e.text + text.slice(Math.max(e.start, e.end));
+          }
+          import_fs.default.writeFileSync(file, text, "utf8");
+        }
+        return true;
+      } catch (err) {
+        log("[host] applyEdit \u5931\u8D25: " + err);
+        return false;
+      }
+    };
+  }
 }
 var req = (0, import_module.createRequire)(__filename);
 var Module = req("module");
@@ -2350,6 +2480,240 @@ req.cache["vscode-mock"] = {
 host.on("extensionWebviewMessage", (message) => {
   send({ type: "extensionMessage", message });
 });
+var envStore = { editor: null, diagnostics: [] };
+var makeUri = (fsPath) => ({
+  scheme: "file",
+  path: fsPath.replace(/\\/g, "/"),
+  fsPath,
+  toString: () => "file:///" + fsPath.replace(/\\/g, "/")
+});
+var SliceByLines = (text, sl, sc, el, ec) => {
+  const lineStarts = [0];
+  for (let i = 0; i < text.length; i++) {
+    if (text.charCodeAt(i) === 10) lineStarts.push(i + 1);
+  }
+  const clampLine = (l) => Math.max(0, Math.min(l, lineStarts.length - 1));
+  const start = lineStarts[clampLine(sl)] + Math.max(0, sc);
+  const end = lineStarts[clampLine(el)] + Math.max(0, ec);
+  return text.slice(Math.min(start, text.length), Math.min(Math.max(start, end), text.length));
+};
+var toTextEditor = (e) => {
+  if (!e) return void 0;
+  const doc = {
+    uri: makeUri(e.path),
+    fileName: e.path,
+    languageId: (e.language || "").toLowerCase(),
+    version: 1,
+    isDirty: !!e.isDirty,
+    isUntitled: false,
+    isClosed: false,
+    eol: 1,
+    lineCount: e.lineCount || 0,
+    getText: (range) => {
+      const text = e.text ?? "";
+      if (!range) return text;
+      try {
+        return SliceByLines(text, range.start?.line ?? 0, range.start?.character ?? 0, range.end?.line ?? range.start?.line ?? 0, range.end?.character ?? range.start?.character ?? 0);
+      } catch {
+        return "";
+      }
+    },
+    positionAt: () => ({ line: 0, character: 0 }),
+    save: async () => {
+    }
+  };
+  const sel = e.selection || {};
+  const position = (l, c) => ({ line: l ?? 0, character: c ?? 0 });
+  const active = position(sel.activeLine, sel.activeChar);
+  const anchor = position(sel.anchorLine, sel.anchorChar);
+  const selection = {
+    active,
+    anchor,
+    start: active,
+    end: anchor,
+    isEmpty: active.line === anchor.line && active.character === anchor.character
+  };
+  return {
+    document: doc,
+    selection,
+    selections: [selection],
+    visibleRanges: [selection],
+    viewColumn: 1,
+    setDecorations: () => {
+    },
+    edit: async () => true,
+    insertSnippet: async () => true,
+    revealRange: () => {
+    }
+  };
+};
+var patchVscodeForInterop = () => {
+  try {
+    const call = globalThis.__zoovsCallHost;
+    if (typeof call !== "function") return;
+    const anyLang = vscode.languages;
+    anyLang.getDiagnostics = (uri) => {
+      if (uri && uri.fsPath) {
+        const hit = envStore.diagnostics.find(([p]) => p === uri.fsPath || p.fsPath && p.fsPath === uri.fsPath);
+        return hit ? hit[1] : [];
+      }
+      return envStore.diagnostics.map(([p, list]) => [makeUri(p), list]);
+    };
+    const anyWin = vscode.window;
+    const tempDir = import_path.default.join(require("os").tmpdir(), "ZooVS", "diffs");
+    const decodeLeftUri = (uriObj) => {
+      try {
+        const scheme = String(uriObj?.scheme ?? "");
+        if (!scheme || scheme === "file") {
+          const fp = uriObj?.fsPath ?? uriObj?.path ?? "";
+          return fp ? String(fp) : null;
+        }
+        const raw = Buffer.from(String(uriObj?.query ?? ""), "base64").toString("utf8");
+        const base = import_path.default.basename(String(uriObj?.path ?? uriObj?.toString() ?? "original.txt").split("?")[0]) || "original.txt";
+        const fsMod = require("fs");
+        fsMod.mkdirSync(tempDir, { recursive: true });
+        const leftPath = import_path.default.join(tempDir, "left-" + Date.now() + "-" + base);
+        fsMod.writeFileSync(leftPath, raw, "utf8");
+        return leftPath;
+      } catch (e) {
+        log("[interop] left URI \u89E3\u7801\u5931\u8D25: " + e);
+        return null;
+      }
+    };
+    const origShow = anyWin.showTextDocument?.bind(anyWin);
+    if (typeof origShow === "function") {
+      anyWin.showTextDocument = async (...showArgs) => {
+        const ed = await origShow(...showArgs);
+        if (ed && typeof ed.setDecorations !== "function") {
+          ed.setDecorations = () => {
+          };
+          if (typeof ed.insertSnippet !== "function") ed.insertSnippet = async () => true;
+        }
+        return ed;
+      };
+    }
+    const eventStub = () => (_cb) => ({ dispose: () => {
+    } });
+    for (const name of [
+      "onDidChangeTextEditorVisibleRanges",
+      "onDidStartTerminalShellExecution",
+      "onDidEndTerminalShellExecution",
+      "onDidChangeTerminalShellIntegration"
+    ]) {
+      if (typeof anyWin[name] !== "function") anyWin[name] = eventStub();
+    }
+    if (typeof anyWin.withProgress !== "function") {
+      anyWin.withProgress = async (_options, task) => await task(
+        { report: () => {
+        } },
+        {
+          isCancellationRequested: false,
+          onCancellationRequested: () => ({ dispose: () => {
+          } })
+        }
+      );
+    }
+    if (typeof anyWin.createWebviewPanel !== "function") {
+      anyWin.createWebviewPanel = (..._args) => ({
+        webview: {
+          postMessage: async () => {
+          },
+          onDidReceiveMessage: () => ({ dispose: () => {
+          } }),
+          asWebviewUri: (u) => u,
+          html: ""
+        },
+        onDidDispose: () => ({ dispose: () => {
+        } }),
+        onDidChangeViewState: () => ({ dispose: () => {
+        } }),
+        reveal: () => {
+        },
+        dispose: () => {
+        },
+        title: "",
+        visible: true
+      });
+    }
+    try {
+      Object.defineProperty(anyWin, "activeTextEditor", {
+        get: () => toTextEditor(envStore.editor),
+        configurable: true
+      });
+      Object.defineProperty(anyWin, "visibleTextEditors", {
+        get: () => envStore.editor ? [toTextEditor(envStore.editor)] : [],
+        configurable: true
+      });
+    } catch (e) {
+      log("[interop] activeTextEditor \u8865\u4E01\u5931\u8D25: " + e);
+    }
+    try {
+      const anyCmd = vscode.commands;
+      const origExecute = anyCmd.executeCommand?.bind(anyCmd) ?? (async () => void 0);
+      anyCmd.executeCommand = async (command, ...args) => {
+        if (command === "vscode.diff" || command === "vscode.diffSideBySide") {
+          const l = decodeLeftUri(args[0]);
+          const r = args[1]?.fsPath ?? args[1]?.path ?? String(args[1] ?? "");
+          if (!l || !r) {
+            log("[interop] vscode.diff \u53C2\u6570\u7F3A\u5931 left=" + l + " right=" + r);
+            return;
+          }
+          return call("internal_open_diff", { leftPath: l, rightPath: r, title: args[2] });
+        }
+        return origExecute(command, ...args);
+      };
+    } catch (e) {
+      log("[interop] diff \u547D\u4EE4\u8865\u4E01\u5931\u8D25: " + e);
+    }
+    const showMessage = (level) => async (message, ...rest) => {
+      const items = rest.filter((x) => typeof x === "string").slice(0, 3);
+      return await call("internal_show_message", { level, message, items });
+    };
+    try {
+      anyWin.showInformationMessage = showMessage("info");
+      anyWin.showWarningMessage = showMessage("warning");
+      anyWin.showErrorMessage = showMessage("error");
+      anyWin.showOpenDialog = async (options) => {
+        const json = await call("internal_open_dialog", { canSelectMany: !!options?.canSelectMany });
+        try {
+          const arr = JSON.parse(String(json ?? "[]"));
+          return arr.map((u) => makeUri(u.fsPath));
+        } catch {
+          return void 0;
+        }
+      };
+      anyWin.showSaveDialog = async (_options) => {
+        const json = await call("internal_save_dialog", {});
+        try {
+          const u = JSON.parse(String(json ?? "null"));
+          return u && u.fsPath ? makeUri(u.fsPath) : void 0;
+        } catch {
+          return void 0;
+        }
+      };
+    } catch (e) {
+      log("[interop] \u5BF9\u8BDD\u6846\u8865\u4E01\u5931\u8D25: " + e);
+    }
+    try {
+      const anyEnv = vscode.env;
+      if (!anyEnv.clipboard) anyEnv.clipboard = {};
+      anyEnv.clipboard.readText = async () => String(await call("internal_clipboard_read", {}) ?? "");
+      anyEnv.clipboard.writeText = async (text) => {
+        await call("internal_clipboard_write", { text: String(text ?? "") });
+      };
+      const origOpenExternal = anyEnv.openExternal?.bind(anyEnv) ?? (async () => false);
+      anyEnv.openExternal = async (uri) => {
+        const u = typeof uri === "string" ? uri : uri?.toString?.() ?? String(uri ?? "");
+        return String(await call("internal_open_external", { uri: u })) === "true" || origOpenExternal(uri);
+      };
+    } catch (e) {
+      log("[interop] \u526A\u8D34\u677F\u8865\u4E01\u5931\u8D25: " + e);
+    }
+    log("[interop] shim \u80FD\u529B\u8865\u4E01\u5C31\u7EEA(diff/\u5BF9\u8BDD\u6846/\u526A\u8D34\u677F/diagnostics/activeTextEditor)");
+  } catch (e) {
+    log("[interop] \u8865\u4E01\u5F02\u5E38: " + e);
+  }
+};
 (async () => {
   log("\u5BBF\u4E3B\u542F\u52A8: extensionPath=" + extensionPath + " workspace=" + workspacePath);
   const bundlePath = import_path.default.join(extensionPath, "extension.js");
@@ -2361,6 +2725,20 @@ host.on("extensionWebviewMessage", (message) => {
   log("[host:activate \u5931\u8D25] " + (err?.stack || err));
   process.exitCode = 1;
 });
+var hostCalls = /* @__PURE__ */ new Map();
+var hostCallSeq = 1;
+global.__zoovsCallHost = (tool, args) => {
+  return new Promise((resolve, reject) => {
+    const id = hostCallSeq++;
+    const timer = setTimeout(() => {
+      hostCalls.delete(id);
+      reject(new Error(`host call '${tool}' timed out after 300s`));
+    }, 3e5);
+    hostCalls.set(id, { resolve, reject, timer });
+    send({ type: "hostCall", id, tool, args: args ?? {} });
+  });
+};
+patchVscodeForInterop();
 var rl = import_readline.default.createInterface({ input: process.stdin, terminal: false });
 rl.on("line", (line) => {
   const trimmed = line.trim();
@@ -2372,6 +2750,32 @@ rl.on("line", (line) => {
       host.markWebviewReady();
     } else if (msg.type === "webviewMessage" && msg.message) {
       host.emit("webviewMessage", msg.message);
+    } else if (msg.type === "hostCallResult" && msg.id !== void 0) {
+      const pending = hostCalls.get(msg.id);
+      if (pending) {
+        hostCalls.delete(msg.id);
+        clearTimeout(pending.timer);
+        if (msg.ok) pending.resolve(msg.result);
+        else pending.reject(new Error(String(msg.error ?? "host call failed")));
+      }
+    } else if (msg.type === "workspaceChanged" && msg.workspace) {
+      try {
+        const wsAny2 = vscode.workspace;
+        wsAny2.workspaceFolders = [
+          { uri: vscode.Uri.file(String(msg.workspace)), name: import_path.default.basename(String(msg.workspace)), index: 0 }
+        ];
+        try {
+          await(globalThis).__zoovsRefreshWorkspace?.();
+        } catch (e) {
+          log("[host] refreshWorkspace \u5931\u8D25: " + e);
+        }
+        log("[host] \u5DE5\u4F5C\u533A\u5DF2\u70ED\u66F4\u65B0: " + msg.workspace);
+      } catch (e) {
+        log("[host] \u5DE5\u4F5C\u533A\u70ED\u66F4\u65B0\u5931\u8D25: " + e);
+      }
+    } else if (msg.type === "envPush") {
+      if ("editor" in msg) envStore.editor = msg.editor;
+      if ("diagnostics" in msg) envStore.diagnostics = Array.isArray(msg.diagnostics) ? msg.diagnostics : [];
     }
   } catch (e) {
     log("[host] stdin \u89E3\u6790\u5931\u8D25: " + e);

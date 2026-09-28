@@ -223,6 +223,87 @@ public static class SolutionTools
     }
 
     [McpServerTool]
+    [Description("查找方法的调用关系:direction=callers(谁调用了它,按调用方方法聚合)或 callees(它调用了哪些方法/构造器)。")]
+    public static async Task<string> find_calls(
+        [Description("方向:callers 或 callees")] string direction,
+        [Description("符号引用:文件:行:列 或 全名")] string symbolRef,
+        [Description(".sln/.csproj 绝对路径")] string solutionPath)
+    {
+        var solution = await GetSolutionAsync(solutionPath);
+        var symbol = await ResolveSymbolAsync(solution, symbolRef);
+        if (symbol == null) return "未定位到符号: " + symbolRef;
+
+        var sb = new StringBuilder();
+
+        if (string.Equals(direction, "callees", StringComparison.OrdinalIgnoreCase))
+        {
+            // 声明语法内所有调用点 → 解析被调符号(去重)
+            var callees = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var loc in symbol.Locations.Where(l => l.IsInSource))
+            {
+                var doc = solution.GetDocument(loc.SourceTree);
+                if (doc == null) continue;
+                var model = await doc.GetSemanticModelAsync();
+                var root = await doc.GetSyntaxRootAsync();
+                if (model == null || root == null) continue;
+
+                var declaration = root.FindNode(loc.SourceSpan);
+                foreach (var inv in declaration.DescendantNodes()
+                             .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.InvocationExpressionSyntax>())
+                {
+                    var info = model.GetSymbolInfo(inv);
+                    var target = info.Symbol ?? info.CandidateSymbols.FirstOrDefault();
+                    if (target?.OriginalDefinition is INamedTypeSymbol or IMethodSymbol or IPropertySymbol or IFieldSymbol)
+                    {
+                        callees.Add(target.OriginalDefinition.ToDisplayString());
+                    }
+                    if (callees.Count >= 60) break;
+                }
+                foreach (var ctor in declaration.DescendantNodes()
+                             .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.ObjectCreationExpressionSyntax>())
+                {
+                    var info = model.GetSymbolInfo(ctor);
+                    if (info.Symbol is IMethodSymbol ctorMethod)
+                    {
+                        callees.Add("new " + ctorMethod.ContainingType.ToDisplayString());
+                    }
+                    if (callees.Count >= 60) break;
+                }
+            }
+            sb.AppendLine($"callees of {symbol.ToDisplayString()} ({callees.Count}):");
+            foreach (var c in callees.Take(50)) sb.AppendLine("- " + c);
+            if (callees.Count == 0) sb.AppendLine("(无调用点,可能不是方法或为空实现)");
+            return sb.ToString();
+        }
+
+        // callers:全部引用位置 → 聚合到所属方法
+        var refs = await SymbolFinder.FindReferencesAsync(symbol, solution);
+        var callers = new Dictionary<string, int>();
+        foreach (var rs in refs)
+        {
+            foreach (var rl in rs.Locations)
+            {
+                var model = await rl.Document.GetSemanticModelAsync();
+                if (model == null) continue;
+                var caller = model.GetEnclosingSymbol(rl.Location.SourceSpan.Start);
+                var target = caller ?? symbol;
+                // 跳过自身声明与属性访问器噪声
+                if (SymbolEqualityComparer.Default.Equals(target, symbol)) continue;
+                if (target is IMethodSymbol { MethodKind: MethodKind.PropertyGet or MethodKind.PropertySet }) continue;
+                var key = target.ToDisplayString();
+                callers[key] = callers.TryGetValue(key, out var n) ? n + 1 : 1;
+            }
+        }
+        sb.AppendLine($"callers of {symbol.ToDisplayString()} ({callers.Count}):");
+        foreach (var kv in callers.OrderByDescending(kv => kv.Value).Take(50))
+        {
+            sb.AppendLine($"- {kv.Key}  (调用 {kv.Value} 次)");
+        }
+        if (callers.Count == 0) sb.AppendLine("(未找到调用方)");
+        return sb.ToString();
+    }
+
+    [McpServerTool]
     [Description("类型继承视图:基类链、接口列表与派生类/实现类(接口自动查实现)。")]
     public static async Task<string> hierarchy(
         [Description("类型名或 文件:行:列")] string typeRef,

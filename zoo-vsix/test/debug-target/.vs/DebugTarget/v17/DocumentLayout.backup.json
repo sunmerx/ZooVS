@@ -1,0 +1,85 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\code\\cline-vsex\\zoo-vsix\\test\\debug-target\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{1107E6BB-D2AF-4F5C-884A-F92D3EF13CE0}|..\\WpfApp1\\WpfApp1.csproj|e:\\code\\cline-vsex\\zoo-vsix\\test\\wpfapp1\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1107E6BB-D2AF-4F5C-884A-F92D3EF13CE0}|..\\WpfApp1\\WpfApp1.csproj|e:\\code\\cline-vsex\\zoo-vsix\\test\\wpfapp1\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{51B82857-BDA0-E311-7906-0C10C1FCD568}|DebugTarget.csproj|e:\\code\\cline-vsex\\zoo-vsix\\test\\debug-target\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{51B82857-BDA0-E311-7906-0C10C1FCD568}|DebugTarget.csproj|solutionrelative:class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{51B82857-BDA0-E311-7906-0C10C1FCD568}|DebugTarget.csproj|e:\\code\\cline-vsex\\zoo-vsix\\test\\debug-target\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{51B82857-BDA0-E311-7906-0C10C1FCD568}|DebugTarget.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "E:\\code\\cline-vsex\\zoo-vsix\\test\\WpfApp1\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "..\\WpfApp1\\MainWindow.xaml",
+              "ToolTip": "E:\\code\\cline-vsex\\zoo-vsix\\test\\WpfApp1\\MainWindow.xaml",
+              "RelativeToolTip": "..\\WpfApp1\\MainWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-09-27T15:01:54.622Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MainWindow.xaml.cs",
+              "DocumentMoniker": "E:\\code\\cline-vsex\\zoo-vsix\\test\\WpfApp1\\MainWindow.xaml.cs",
+              "RelativeDocumentMoniker": "..\\WpfApp1\\MainWindow.xaml.cs",
+              "ToolTip": "E:\\code\\cline-vsex\\zoo-vsix\\test\\WpfApp1\\MainWindow.xaml.cs",
+              "RelativeToolTip": "..\\WpfApp1\\MainWindow.xaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-27T15:01:54.289Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Class1.cs",
+              "DocumentMoniker": "E:\\code\\cline-vsex\\zoo-vsix\\test\\debug-target\\Class1.cs",
+              "RelativeDocumentMoniker": "Class1.cs",
+              "ToolTip": "E:\\code\\cline-vsex\\zoo-vsix\\test\\debug-target\\Class1.cs",
+              "RelativeToolTip": "Class1.cs",
+              "ViewState": "AgIAAAIAAAAAAAAAAAAIwAoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-27T03:26:01.755Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Program.cs",
+              "DocumentMoniker": "E:\\code\\cline-vsex\\zoo-vsix\\test\\debug-target\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "E:\\code\\cline-vsex\\zoo-vsix\\test\\debug-target\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-27T02:53:42.672Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

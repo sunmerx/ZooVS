@@ -34,6 +34,31 @@ namespace ZooVs.Package
 			Content = _root;
 		}
 
+		/// <summary>
+		/// VS 启动恢复窗口布局时会直接创建本窗格(不经菜单命令)——
+		/// 必须在这里自拉起宿主,否则占位页永远停在"正在启动…",用户须再点一次菜单。
+		/// 派发到 ApplicationIdle:避免在本窗格创建过程中重入 FindToolWindow。
+		/// </summary>
+		protected override void Initialize()
+		{
+			base.Initialize();
+			System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
+				new Action(() =>
+				{
+					try
+					{
+						// Package 属性在 Initialize 早期可能尚未赋值,静态 Instance 兜底
+						var pkg = Package as ZooVsPackage ?? ZooVsPackage.Instance;
+						if (pkg != null)
+						{
+							_ = pkg.AutoStartAsync();
+						}
+					}
+					catch { /* 自拉起失败不影响手动打开 */ }
+				}),
+				System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+		}
+
 		public void ShowMessage(string text)
 		{
 			if (!ReferenceEquals(_root.Children.Count > 0 ? _root.Children[0] : null, _placeholder))

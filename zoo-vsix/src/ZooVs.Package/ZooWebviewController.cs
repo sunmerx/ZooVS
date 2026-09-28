@@ -26,7 +26,7 @@ namespace ZooVs.Package
 			"(() => {" +
 			"  'use strict';" +
 			"  chrome.webview.addEventListener('message', e => { window.postMessage(e.data, '*'); });" +
-			"  window.MATERIAL_ICONS_BASE_URI = '/assets/vscode-material-icons';" +
+				"  window.MATERIAL_ICONS_BASE_URI = '/assets/vscode-material-icons/icons';" +
 			"  window.IMAGES_BASE_URI = '/assets/images';" +
 			"  window.AUDIO_BASE_URI = '/webview-ui/audio';" +
 			"  let __zooState = null;" +
@@ -167,10 +167,14 @@ namespace ZooVs.Package
 			webView.Source = new Uri("https://" + VirtualHost + "/index.html");
 
 			core.NavigationCompleted += async (s, e) =>
-			{
-				try
 				{
-					await Task.Delay(2500);
+					try
+					{
+						// 协议握手:host.ts 收到 webviewReady 才会 markWebviewReady(退出 initial-setup
+						// 模式)并向扩展注入 webviewDidLaunch → 扩展 postStateToWebview。
+						// 此前从未发送,导致首启前端停在自己的 loading 页。
+						await _hostManager.SendAsync("{\"type\":\"webviewReady\"}");
+						await Task.Delay(2500);
 					// 兜底主题注入 + 页面状态快照
 					await core.ExecuteScriptAsync(
 						"(() => { try { const vars = JSON.parse(" + NewtonsoftJson(WebviewTheme.VarsJson) + ");" +

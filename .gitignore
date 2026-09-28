@@ -6,3 +6,9 @@ zoo-vsix/src/ZooVs.Package/bin/
 zoo-vsix/src/ZooVs.Package/obj/
 vsix/src/*/bin/
 vsix/src/*/obj/
+# 构建产物(曾误提交)
+zoo-mcp-server/bin/
+zoo-mcp-server/obj/
+zoo-vsix/test/*.png
+zoo-vsix/test/*.log
+zoo-vsix/test/deploy_watch.log

@@ -24,10 +24,17 @@ public static class BuildTools
             return "未找到 MSBuild.exe。请确认已安装 Visual Studio(含 C# 工作负载)。";
         }
 
+        // configuration 直接拼进 MSBuild 命令行,做白名单消毒防参数注入
+        var safeConfiguration = string.IsNullOrWhiteSpace(configuration) ? "Debug" : configuration.Trim();
+        if (!System.Text.RegularExpressions.Regex.IsMatch(safeConfiguration, @"^[A-Za-z0-9_\-\. ]{1,40}$"))
+        {
+            return $"非法的构建配置名: {configuration}";
+        }
+
         var psi = new ProcessStartInfo
         {
             FileName = msbuild,
-            Arguments = $"\"{solutionPath}\" /p:Configuration={configuration} /m /nologo /v:m /restore /clp:Summary;ErrorsOnly",
+            Arguments = $"\"{solutionPath}\" /p:Configuration=\"{safeConfiguration}\" /m /nologo /v:m /restore /clp:Summary;ErrorsOnly",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,

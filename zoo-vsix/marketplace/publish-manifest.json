@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json.schemastore.org/vsix-publish",
+  "categories": [ "Coding", "Productivity", "AI" ],
+  "identity": {
+    "internalName": "ZooVS"
+  },
+  "overview": "overview.md",
+  "publisher": "你的发布者ID(Publisher ID,必填,须与 vsixmanifest 中 Publisher 一致)",
+  "repo": "",
+  "license": { "file": "../LICENSE" },
+  "icons": {
+    "icon": "icon-400.png"
+  },
+  "files": [
+    { "assetId": "Microsoft.VisualStudio.Services.Icons.Default", "path": "icon-400.png" },
+    { "assetId": "Microsoft.VisualStudio.Services.Content.Details", "path": "overview.md" },
+    { "assetId": "Microsoft.VisualStudio.Services.Content.License", "path": "../LICENSE" }
+  ],
+  "properties": [
+    { "id": "Microsoft.VisualStudio.Code.Engine", "value": "1.0.0" },
+    { "id": "Microsoft.VisualStudio.Services.Links.Learn", "value": "" },
+    { "id": "Microsoft.VisualStudio.Services.Links.Support", "value": "" },
+    { "id": "Microsoft.VisualStudio.Services.License", "value": "Apache-2.0" }
+  ]
+}

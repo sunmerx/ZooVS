@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using ZooVs.Bridge;
+using ZooVs.Package;
 
 namespace ZooVs.Daemon
 {
@@ -18,7 +19,7 @@ namespace ZooVs.Daemon
 		private readonly string _extensionPath;   // 扩展 bundle(assets/dist)
 		private readonly string _dataDirectory;
 		private readonly string _nodeExecutable;
-		private readonly string _workspacePath;
+		private string _workspacePath;
 		private readonly int _maxRestarts = 3;
 
 		private Process _process;
@@ -28,6 +29,9 @@ namespace ZooVs.Daemon
 
 		/// <summary>扩展激活完成(webview 可加载)。</summary>
 		public volatile bool IsReady;
+
+		/// <summary>会话进行中(存在待批准 ask)——此时重启宿主会销毁运行中的任务,须推迟。</summary>
+		public volatile bool ConversationActive;
 
 		public event Action< long, string > UnknownMessage; // 预留
 
@@ -58,9 +62,40 @@ namespace ZooVs.Daemon
 		}
 
 		/// <summary>
+		/// 工作区变化(用户切换解决方案)时重启宿主:node 的 ZOO_WORKSPACE 在 spawn 时固化,
+		/// 不重启会让 @ 文件搜索等一直搜旧目录。IsReady 复位;webview 由调用方在就绪后重发握手。
+		/// </summary>
+		public async Task RestartWithWorkspaceAsync(string newWorkspace)
+		{
+			if (string.Equals(_workspacePath, newWorkspace, StringComparison.OrdinalIgnoreCase))
+			{
+				return;
+			}
+			_workspacePath = newWorkspace;
+			_stopped = true; // 抑制 OnProcessExited 的自动重启
+			IsReady = false;
+			try
+			{
+				if (_process != null && !_process.HasExited)
+				{
+					KillProcessTree(_process.Id);
+					_process.WaitForExit(5000);
+				}
+			}
+			catch { }
+			_process = null;
+			_stopped = false;
+			_restartCount = 0;
+			_host.Log("[host] 工作区变更,重启宿主:" + newWorkspace);
+			StartHostProcess();
+			await Task.CompletedTask;
+		}
+
+		/// <summary>
 		/// 清理上次 VS 会话遗留的本扩展宿主进程(强杀/崩溃场景)。
-		/// 孤儿进程持有数据目录会让新宿主初始化卡死(表现为界面停在"正在启动…")。
-		/// 按命令行包含 host.cjs 全路径的特征精确匹配,不误伤其他 node。
+		/// 孤儿判定 = 命令行含 host.cjs 全路径 且 父进程已退出——父链上仍有活跃 devenv 的
+		/// 宿主属于另一个 VS 实例,误杀会导致对方实例瘫痪(多实例场景)。
+		/// 注意:多实例仍共享同一数据目录,状态可能互踩(已知限制,日志提示)。
 		/// </summary>
 		private void KillOrphanHosts()
 		{
@@ -68,14 +103,20 @@ namespace ZooVs.Daemon
 			{
 				var marker = Path.Combine(_hostDirectory, "host.cjs").ToLowerInvariant();
 				foreach (var o in new System.Management.ManagementObjectSearcher(
-					"SELECT ProcessId, CommandLine FROM Win32_Process WHERE Name = 'node.exe'").Get())
+					"SELECT ProcessId, ParentProcessId, CommandLine FROM Win32_Process WHERE Name = 'node.exe'").Get())
 				{
 					var mo = (System.Management.ManagementBaseObject)o;
 					var cmd = (mo["CommandLine"] as string ?? "").ToLowerInvariant();
 					if (cmd.Contains(marker))
 					{
 						var pid = Convert.ToInt32(mo["ProcessId"]);
-						_host.Log("[host] 清理遗留宿主进程 pid=" + pid);
+						var ppid = Convert.ToInt32(mo["ParentProcessId"]);
+						if (IsProcessAlive(ppid))
+						{
+							_host.Log("[host] 检测到另一活跃 VS 实例的宿主(pid=" + pid + "),跳过清理;注意多实例共享数据目录可能互踩状态");
+							continue;
+						}
+						_host.Log("[host] 清理遗留宿主进程 pid=" + pid + "(父进程 " + ppid + " 已退出)");
 						try { Process.GetProcessById(pid)?.Kill(); } catch { }
 					}
 				}
@@ -83,6 +124,19 @@ namespace ZooVs.Daemon
 			catch (Exception ex)
 			{
 				_host.Log("[host] 孤儿进程清理检查失败:" + ex.Message);
+			}
+		}
+
+		private static bool IsProcessAlive(int pid)
+		{
+			if (pid <= 0) return false;
+			try
+			{
+				return !Process.GetProcessById(pid).HasExited;
+			}
+			catch
+			{
+				return false; // 进程不存在
 			}
 		}
 
@@ -119,9 +173,15 @@ namespace ZooVs.Daemon
 			process.Exited += OnProcessExited;
 
 			process.Start();
+			BindToShutdownJob(process);
 			process.BeginOutputReadLine();
 			process.BeginErrorReadLine();
 			_process = process;
+		}
+
+		private void BindToShutdownJob(Process process)
+		{
+			VsJobObject.Bind(process, _host.Log);
 		}
 
 		/// <summary>stdout 行解析:ready / extensionMessage / log。</summary>
@@ -150,10 +210,57 @@ namespace ZooVs.Daemon
 								// 否则用户以为"中断/卡死"(M1 实测教训)
 								if (json.Contains("\"ask\":") && json.Contains("\"partial\":false"))
 								{
+									ConversationActive = true;
 									_ = _host.SetStatusBarAsync("Zoo Code 等待你在 ZooVS 面板中批准操作(如读取文件)");
 									_host.Log("[ask] agent 已暂停,等待你在 ZooVS 面板中批准/拒绝操作");
 								}
+								else if (json.Contains("\"say\":") || json.Contains("\"type\":\"state\""))
+								{
+									ConversationActive = false;
+								}
 								_ = _host.InvokeOnUIThreadAsync(() => PostToWebview(json));
+							}
+							break;
+
+						case "hostCall":
+							// 扩展内 vs_* 工具请求 → 路由(如 Roslyn 子进程)→ 回写 hostCallResult
+							if (root.TryGetProperty("id", out var callId) &&
+								root.TryGetProperty("tool", out var toolEl))
+							{
+								var id = callId.GetInt64();
+								var tool = toolEl.GetString() ?? "";
+								var argsJson = root.TryGetProperty("args", out var argsEl) ? argsEl.GetRawText() : "{}";
+								_ = Task.Run(async () =>
+								{
+									string ok; string payload;
+									try
+									{
+										var router = HostCallRouter;
+										if (router == null) throw new InvalidOperationException("宿主未注册工具路由");
+										payload = await router(tool, argsJson);
+										ok = "true";
+									}
+									catch (Exception ex)
+									{
+										payload = ex.Message;
+										ok = "false";
+									}
+									var reply = new System.Text.Json.Nodes.JsonObject
+									{
+										["type"] = "hostCallResult",
+										["id"] = id,
+										["ok"] = ok == "true",
+									};
+									if (ok == "true")
+									{
+										reply["result"] = payload ?? "";
+									}
+									else
+									{
+										reply["error"] = payload ?? "";
+									}
+									await SendAsync(reply.ToJsonString());
+								});
 							}
 							break;
 
@@ -176,6 +283,9 @@ namespace ZooVs.Daemon
 
 		/// <summary>host → webview 的最近一次投递回调(由 controller 注册)。</summary>
 		public Action<string> WebviewPostHandler { get; set; }
+
+		/// <summary>vs_* 工具执行路由(由 Package 注册到 RoslynHostService 等)。</summary>
+		public Func<string, string, Task<string>> HostCallRouter { get; set; }
 
 		private void PostToWebview(string messageJson)
 		{

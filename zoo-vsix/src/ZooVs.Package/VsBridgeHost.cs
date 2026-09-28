@@ -36,6 +36,16 @@ namespace ZooVs.Package
 
 		public void Log(string message)
 		{
+			// 文件落地:输出窗格在启动卡死时不可见,日志文件是唯一可诊断通道
+			try
+			{
+				var dir = System.IO.Path.Combine(
+					Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ZooVS", "log");
+				System.IO.Directory.CreateDirectory(dir);
+				System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "zoovs.log"),
+					DateTime.Now.ToString("HH:mm:ss.fff") + " [pid " + System.Diagnostics.Process.GetCurrentProcess().Id + "] " + message + Environment.NewLine);
+			}
+			catch { }
 			ThreadHelper.Generic.BeginInvoke(() =>
 			{
 				try
@@ -47,9 +57,42 @@ namespace ZooVs.Package
 			});
 		}
 
+		/// <summary>当前解决方案文件完整路径(.sln;无解决方案返回 null,由调用方兜底)。</summary>
+		public async Task<string> GetSolutionFilePathAsync()
+		{
+			await _package.JoinableTaskFactory.SwitchToMainThreadAsync();
+			try
+			{
+				var dte = (EnvDTE80.DTE2)ServiceProvider.GlobalProvider.GetService(typeof(EnvDTE.DTE));
+				var full = dte?.Solution?.FullName;
+				if (!string.IsNullOrEmpty(full))
+				{
+					return full;
+				}
+			}
+			catch { }
+			return null;
+		}
+
 		public async Task<string> GetWorkspacePathAsync()
 		{
 			await _package.JoinableTaskFactory.SwitchToMainThreadAsync();
+			// 优先 IVsSolution.GetSolutionInfo:解决方案与"打开文件夹"模式都能给出根目录
+			try
+			{
+				var sol = (IVsSolution)ServiceProvider.GlobalProvider.GetService(typeof(SVsSolution));
+				string solDir, solFile, userOpts;
+				if (sol != null && sol.GetSolutionInfo(out solDir, out solFile, out userOpts) == 0 &&
+					!string.IsNullOrEmpty(solDir))
+				{
+					if (!string.IsNullOrEmpty(solFile))
+					{
+						return System.IO.Path.GetDirectoryName(solFile);
+					}
+					return solDir; // 文件夹模式:无 sln 文件,目录即工作区
+				}
+			}
+			catch { }
 			try
 			{
 				var dte = (EnvDTE80.DTE2)ServiceProvider.GlobalProvider.GetService(typeof(EnvDTE.DTE));
@@ -65,6 +108,15 @@ namespace ZooVs.Package
 			}
 			catch { }
 			return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+		}
+
+		/// <summary>工作区是否为兜底值(启动时 VS 尚未打开任何东西;此时不应冻结成 node 的 env)。</summary>
+		public async Task<bool> IsWorkspaceFallbackAsync()
+		{
+			var resolved = await GetWorkspacePathAsync();
+			return string.Equals(resolved,
+				Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+				StringComparison.OrdinalIgnoreCase);
 		}
 
 		public async Task SetStatusBarAsync(string message)
