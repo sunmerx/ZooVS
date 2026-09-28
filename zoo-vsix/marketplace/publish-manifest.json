@@ -5,7 +5,7 @@
     "internalName": "ZooVS"
   },
   "overview": "overview.md",
-  "publisher": "你的发布者ID(Publisher ID,必填,须与 vsixmanifest 中 Publisher 一致)",
+  "publisher": "sunmerx",
   "repo": "",
   "license": { "file": "../LICENSE" },
   "icons": {

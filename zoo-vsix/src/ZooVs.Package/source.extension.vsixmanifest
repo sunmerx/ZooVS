@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Language="en-US" Id="ZooVS" Version="0.2.0" Publisher="ClineVSContributors"/>
+    <Identity Language="en-US" Id="ZooVS" Version="0.2.0" Publisher="sunmerx"/>
     <DisplayName>ZooVS Chat</DisplayName>
     <Description xml:space="preserve">Community port of the Zoo Code (Roo Code / Cline lineage) AI coding agent for Visual Studio 2022. Runs the upstream extension in a Node host process (vscode-shim), hosts the official web UI in a WebView2 tool window, and adds native VS integration: 20 vs_* agent tools (language/build/debug via Roslyn &amp; VS SDK), inline AI completion with streaming ghost text, native diff windows, and Job Object process cleanup. Brings your own API key - no account required. Derived from Zoo Code (Apache-2.0), see LICENSE and THIRD-PARTY-NOTICES.md in the package. Not affiliated with or endorsed by the Zoo Code / Roo Code / Cline projects.</Description>
     <License>LICENSE</License>
