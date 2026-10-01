@@ -23,14 +23,14 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// zoohost/src/host.ts
+// src/host.ts
 var import_module = require("module");
 var import_fs = __toESM(require("fs"));
 var import_path = __toESM(require("path"));
 var import_readline = __toESM(require("readline"));
 var import_events = require("events");
 
-// packages/vscode-shim/src/classes/Position.ts
+// ../packages/vscode-shim/src/classes/Position.ts
 var Position = class _Position {
   /**
    * The zero-based line number
@@ -135,7 +135,7 @@ var Position = class _Position {
   }
 };
 
-// packages/vscode-shim/src/classes/Range.ts
+// ../packages/vscode-shim/src/classes/Range.ts
 var Range = class _Range {
   start;
   end;
@@ -212,7 +212,7 @@ var Range = class _Range {
   }
 };
 
-// packages/vscode-shim/src/classes/Selection.ts
+// ../packages/vscode-shim/src/classes/Selection.ts
 var Selection = class extends Range {
   /**
    * The anchor position (where the selection started)
@@ -245,7 +245,7 @@ var Selection = class extends Range {
   }
 };
 
-// packages/vscode-shim/src/classes/Uri.ts
+// ../packages/vscode-shim/src/classes/Uri.ts
 var path = __toESM(require("path"), 1);
 var Uri = class _Uri {
   scheme;
@@ -342,7 +342,7 @@ var Uri = class _Uri {
   }
 };
 
-// packages/vscode-shim/src/classes/EventEmitter.ts
+// ../packages/vscode-shim/src/classes/EventEmitter.ts
 var EventEmitter = class {
   #listeners = /* @__PURE__ */ new Set();
   /**
@@ -398,7 +398,7 @@ var EventEmitter = class {
   }
 };
 
-// packages/vscode-shim/src/classes/TextEdit.ts
+// ../packages/vscode-shim/src/classes/TextEdit.ts
 var TextEdit = class _TextEdit {
   /**
    * The range to replace
@@ -544,7 +544,7 @@ var WorkspaceEdit = class {
   }
 };
 
-// packages/vscode-shim/src/classes/Additional.ts
+// ../packages/vscode-shim/src/classes/Additional.ts
 var Location = class {
   constructor(uri, range) {
     this.uri = uri;
@@ -678,7 +678,7 @@ var FileSystemError = class _FileSystemError extends Error {
   }
 };
 
-// packages/vscode-shim/src/classes/CancellationToken.ts
+// ../packages/vscode-shim/src/classes/CancellationToken.ts
 var CancellationTokenSource = class {
   _token;
   _isCancelled = false;
@@ -705,7 +705,7 @@ var CancellationTokenSource = class {
   }
 };
 
-// packages/vscode-shim/src/utils/logger.ts
+// ../packages/vscode-shim/src/utils/logger.ts
 var ConsoleLogger = class {
   info(message, context, _meta) {
     console.log(`[${context || "INFO"}] ${message}`);
@@ -730,7 +730,7 @@ var logs = {
   debug: (message, context, meta) => logger.debug(message, context, meta)
 };
 
-// packages/vscode-shim/src/classes/OutputChannel.ts
+// ../packages/vscode-shim/src/classes/OutputChannel.ts
 var OutputChannel = class {
   _name;
   constructor(name) {
@@ -755,7 +755,7 @@ var OutputChannel = class {
   }
 };
 
-// packages/vscode-shim/src/classes/StatusBarItem.ts
+// ../packages/vscode-shim/src/classes/StatusBarItem.ts
 var StatusBarItem = class {
   constructor(alignment, priority) {
     this.alignment = alignment;
@@ -813,7 +813,7 @@ var StatusBarItem = class {
   }
 };
 
-// packages/vscode-shim/src/classes/TextEditorDecorationType.ts
+// ../packages/vscode-shim/src/classes/TextEditorDecorationType.ts
 var TextEditorDecorationType = class {
   key;
   constructor(key) {
@@ -823,15 +823,15 @@ var TextEditorDecorationType = class {
   }
 };
 
-// packages/vscode-shim/src/context/ExtensionContext.ts
+// ../packages/vscode-shim/src/context/ExtensionContext.ts
 var path5 = __toESM(require("path"), 1);
 var fs4 = __toESM(require("fs"), 1);
 
-// packages/vscode-shim/src/storage/Memento.ts
+// ../packages/vscode-shim/src/storage/Memento.ts
 var fs2 = __toESM(require("fs"), 1);
 var path3 = __toESM(require("path"), 1);
 
-// packages/vscode-shim/src/utils/paths.ts
+// ../packages/vscode-shim/src/utils/paths.ts
 var fs = __toESM(require("fs"), 1);
 var path2 = __toESM(require("path"), 1);
 var STORAGE_BASE_DIR = ".vscode-mock";
@@ -882,7 +882,7 @@ var VSCodeMockPaths = {
   getLogsDir
 };
 
-// packages/vscode-shim/src/storage/Memento.ts
+// ../packages/vscode-shim/src/storage/Memento.ts
 var FileMemento = class {
   data = {};
   filePath;
@@ -957,7 +957,7 @@ var FileMemento = class {
   }
 };
 
-// packages/vscode-shim/src/storage/SecretStorage.ts
+// ../packages/vscode-shim/src/storage/SecretStorage.ts
 var fs3 = __toESM(require("fs"), 1);
 var path4 = __toESM(require("path"), 1);
 var FileSecretStorage = class {
@@ -1050,7 +1050,7 @@ var FileSecretStorage = class {
   }
 };
 
-// packages/vscode-shim/src/context/ExtensionContext.ts
+// ../packages/vscode-shim/src/context/ExtensionContext.ts
 var ExtensionContextImpl = class {
   subscriptions = [];
   workspaceState;
@@ -1132,7 +1132,7 @@ var ExtensionContextImpl = class {
   }
 };
 
-// packages/vscode-shim/src/api/FileSystemAPI.ts
+// ../packages/vscode-shim/src/api/FileSystemAPI.ts
 var fs5 = __toESM(require("fs"), 1);
 var path6 = __toESM(require("path"), 1);
 var FileSystemAPI = class {
@@ -1192,10 +1192,10 @@ var FileSystemAPI = class {
   }
 };
 
-// packages/vscode-shim/src/api/WorkspaceConfiguration.ts
+// ../packages/vscode-shim/src/api/WorkspaceConfiguration.ts
 var path7 = __toESM(require("path"), 1);
 
-// packages/vscode-shim/src/types.ts
+// ../packages/vscode-shim/src/types.ts
 var ConfigurationTarget = /* @__PURE__ */ ((ConfigurationTarget2) => {
   ConfigurationTarget2[ConfigurationTarget2["Global"] = 1] = "Global";
   ConfigurationTarget2[ConfigurationTarget2["Workspace"] = 2] = "Workspace";
@@ -1272,7 +1272,7 @@ var TextEditorRevealType = /* @__PURE__ */ ((TextEditorRevealType2) => {
   return TextEditorRevealType2;
 })(TextEditorRevealType || {});
 
-// packages/vscode-shim/src/api/WorkspaceConfiguration.ts
+// ../packages/vscode-shim/src/api/WorkspaceConfiguration.ts
 var runtimeConfig = /* @__PURE__ */ new Map();
 function setRuntimeConfig(section, key, value) {
   const fullKey = `${section}.${key}`;
@@ -1381,7 +1381,7 @@ var MockWorkspaceConfiguration = class {
   }
 };
 
-// packages/vscode-shim/src/api/WorkspaceAPI.ts
+// ../packages/vscode-shim/src/api/WorkspaceAPI.ts
 var fs6 = __toESM(require("fs"), 1);
 var path8 = __toESM(require("path"), 1);
 var WorkspaceAPI = class {
@@ -1612,7 +1612,7 @@ var WorkspaceAPI = class {
   }
 };
 
-// packages/vscode-shim/src/api/TabGroupsAPI.ts
+// ../packages/vscode-shim/src/api/TabGroupsAPI.ts
 var TabGroupsAPI = class {
   _onDidChangeTabs = new EventEmitter();
   _tabGroups = [];
@@ -1642,7 +1642,7 @@ var TabGroupsAPI = class {
   }
 };
 
-// packages/vscode-shim/src/api/WindowAPI.ts
+// ../packages/vscode-shim/src/api/WindowAPI.ts
 var WindowAPI = class _WindowAPI {
   tabGroups;
   visibleTextEditors = [];
@@ -1872,7 +1872,7 @@ var WindowAPI = class _WindowAPI {
   }
 };
 
-// packages/vscode-shim/src/api/CommandsAPI.ts
+// ../packages/vscode-shim/src/api/CommandsAPI.ts
 var CommandsAPI = class {
   commands = /* @__PURE__ */ new Map();
   registerCommand(command, callback) {
@@ -1999,7 +1999,7 @@ var CommandsAPI = class {
   }
 };
 
-// packages/vscode-shim/src/utils/machine-id.ts
+// ../packages/vscode-shim/src/utils/machine-id.ts
 var fs7 = __toESM(require("fs"), 1);
 var path9 = __toESM(require("path"), 1);
 var crypto = __toESM(require("crypto"), 1);
@@ -2025,7 +2025,7 @@ function machineIdSync() {
   return machineId;
 }
 
-// packages/vscode-shim/src/api/create-vscode-api-mock.ts
+// ../packages/vscode-shim/src/api/create-vscode-api-mock.ts
 var import_meta = {};
 var Package = { version: "1.0.0" };
 function createVSCodeAPIMock(extensionRootPath, workspacePath2, identity, options) {
@@ -2278,7 +2278,7 @@ function createVSCodeAPIMock(extensionRootPath, workspacePath2, identity, option
   };
 }
 
-// zoohost/src/host.ts
+// src/host.ts
 var extensionPath = process.env.ZOO_EXTENSION_PATH || import_path.default.resolve(__dirname, "..", "dist");
 var workspacePath = process.env.ZOO_WORKSPACE || process.cwd();
 var storageDir = process.env.ZOO_STORAGE_DIR || void 0;
@@ -2658,7 +2658,18 @@ var patchVscodeForInterop = () => {
             log("[interop] vscode.diff \u53C2\u6570\u7F3A\u5931 left=" + l + " right=" + r);
             return;
           }
-          return call("internal_open_diff", { leftPath: l, rightPath: r, title: args[2] });
+          try {
+            const doc = await vscode.workspace.openTextDocument(makeUri(r));
+            const editor = await vscode.window.showTextDocument(doc, {
+              preview: false,
+              preserveFocus: true
+            });
+            log("[interop] vscode.diff \u2192 shim \u5185\u89E3\u6790(\u4E0D\u5F39\u539F\u751F\u7A97\u53E3) right=" + r);
+            return editor;
+          } catch (e) {
+            log("[interop] vscode.diff shim \u89E3\u6790\u5931\u8D25,\u56DE\u9000\u539F\u751F\u7A97\u53E3: " + e);
+            return call("internal_open_diff", { leftPath: l, rightPath: r, title: args[2] });
+          }
         }
         return origExecute(command, ...args);
       };
